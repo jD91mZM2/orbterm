@@ -55,13 +55,8 @@ pub fn handle(console: &mut Console, master_fd: RawFd, process: &mut Child) {
             }
         } else if event_id == master_fd {
             let mut packet = [0; 4096];
-            loop {
-                let count = match master.read(&mut packet) {
-                    Ok(0) => return,
-                    Ok(count) => count,
-                    Err(ref err) if err.kind() == ErrorKind::WouldBlock => break,
-                    Err(_) => panic!("terminal: failed to read master PTY")
-                };
+            let count = master.read(&mut packet).expect("terminal: failed to read master PTY");
+            if count != 0 {
                 console.write(&packet[1..count], true).expect("terminal: failed to write to console");
 
                 if packet[0] & 1 == 1 {
